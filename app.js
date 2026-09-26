@@ -168,14 +168,6 @@
     return HORARIOS[normalizar(cidade)] || null;
   }
 
-  function horariosEmTexto(h) {
-    const lista = (itens) => itens.map((i) => i.horario).join(" · ");
-    const partes = [`🚌 Horários do ônibus – ${h.cidade} (Plataforma ${h.plataforma})`];
-    if (h.ida.length) partes.push(`Ida (${h.cidade} → JBS): ${lista(h.ida)}`);
-    if (h.volta.length) partes.push(`Volta (JBS → ${h.cidade}): ${lista(h.volta)}`);
-    return partes.join("\n");
-  }
-
   // ---------------------------------------------------------------------------
   // Montagem do convite
   // ---------------------------------------------------------------------------
@@ -186,7 +178,6 @@
       data: lerData(document.getElementById("lote-data").value),
       horario: document.getElementById("lote-horario").value || null,
       responsavel: document.getElementById("lote-responsavel").value.trim(),
-      horariosNaMensagem: document.getElementById("lote-horarios-na-mensagem").checked,
     };
   }
 
@@ -251,8 +242,7 @@
     };
 
     const preencher = (texto) => texto.replace(/\{\{(\w+)\}\}/g, (_, chave) => (chave in valores ? valores[chave] : `{{${chave}}}`));
-    let mensagem = preencher(tipo.texto);
-    if (l.horariosNaMensagem && horarios) mensagem += "\n\n" + horariosEmTexto(horarios);
+    const mensagem = preencher(tipo.texto);
 
     return {
       c, tipoId, tipo, data, horario: valores.horario_hh, responsavel, salario, telefone, horarios, mensagem, avisos, valores, preencher,
@@ -723,7 +713,7 @@
     document.getElementById("lote-data").value = paraInputData(amanha);
     aoTrocarTipo();
 
-    ["lote-data", "lote-horario", "lote-responsavel", "lote-horarios-na-mensagem"].forEach((id) =>
+    ["lote-data", "lote-horario", "lote-responsavel"].forEach((id) =>
       document.getElementById(id).addEventListener("input", renderizar)
     );
     document.getElementById("lote-tipo").addEventListener("change", aoTrocarTipo);
