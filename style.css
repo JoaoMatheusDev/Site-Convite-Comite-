@@ -32,12 +32,14 @@ body {
 .topo-conteudo, main { max-width: 980px; margin: 0 auto; }
 .topo-conteudo { display: flex; align-items: center; gap: 16px; }
 .topo h1 { margin: 0; font-size: 1.6rem; }
+.topo-conteudo { gap: 12px; }
 .logo {
-  height: 52px;
+  height: 1.6rem;
   width: auto;
   background: #fff;
-  border-radius: 10px;
-  padding: 6px 10px;
+  border-radius: 6px;
+  padding: 3px 6px;
+  box-sizing: content-box;
   flex-shrink: 0;
 }
 
@@ -211,5 +213,7 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: n
 }
 
 @media (max-width: 600px) {
+  .topo h1 { font-size: 1.3rem; }
+  .logo { height: 1.3rem; }
   .item-botoes .check { margin-left: 0; width: 100%; }
 }
