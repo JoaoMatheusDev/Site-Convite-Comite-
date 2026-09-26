@@ -11,6 +11,9 @@ window.CONFIG = {
   // Cidades atendidas pelo transporte fretado (aparece no script 02)
   cidadesFretado: "Lins, Promissão, Getulina, Sabino, Guaimbê, Cafelândia, Guarantã, Pirajuí",
 
+  // Opções do campo "Responsável" no site
+  responsaveis: ["Priscila", "Natália"],
+
   tipos: {
     entrevista: {
       nome: "Entrevista",

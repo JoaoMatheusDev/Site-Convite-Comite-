@@ -9,7 +9,6 @@
   const COLUNAS = {
     nome: "nome", "nome completo": "nome", colaborador: "nome", candidato: "nome",
     telefone: "telefone", celular: "telefone", whatsapp: "telefone", fone: "telefone",
-    email: "email", "e-mail": "email",
     cidade: "cidade",
     sexo: "sexo", genero: "sexo",
     tipo: "tipo", convite: "tipo", script: "tipo",
@@ -20,7 +19,7 @@
     responsavel: "responsavel",
   };
 
-  const MODELO_COLUNAS = ["Nome", "Telefone", "E-mail", "Cidade", "Sexo", "Tipo", "Data", "Horário", "Cargo", "Salário", "Responsável"];
+  const MODELO_COLUNAS = ["Nome", "Telefone", "Cidade", "Sexo", "Tipo", "Data", "Horário", "Cargo", "Salário", "Responsável"];
 
   let candidatos = [];
   let proximoId = 1;
@@ -267,11 +266,6 @@
 
   function linkWhatsApp(conv) {
     return `https://wa.me/${conv.telefone}?text=${encodeURIComponent(conv.mensagem)}`;
-  }
-
-  function linkEmail(conv) {
-    const assunto = `${conv.tipo.titulo} - JBS Friboi Lins`;
-    return `mailto:${encodeURIComponent(conv.c.email)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(conv.mensagem)}`;
   }
 
   // ---------------------------------------------------------------------------
@@ -577,7 +571,6 @@
       id: proximoId++,
       nome: String(c.nome).trim(),
       telefone: String(c.telefone ?? "").trim(),
-      email: String(c.email ?? "").trim(),
       cidade: String(c.cidade ?? "").trim(),
       sexo: lerSexo(c.sexo),
       tipo: lerTipo(c.tipo),
@@ -592,17 +585,16 @@
 
   function baixarModelo() {
     const exemplos = [
-      ["Willian Souza (exemplo)", "(14) 99999-0000", "", "Promissão", "M", "Entrevista", "", "", "", "", ""],
-      ["Sandra Lima (exemplo)", "14988887777", "sandra@email.com", "Getulina", "F", "Comitê", "", "09:00", "Operadora de Produção", "2000,00", "Natália"],
+      ["Willian Souza (exemplo)", "(14) 99999-0000", "Promissão", "M", "Entrevista", "", "", "", "", ""],
+      ["Sandra Lima (exemplo)", "14988887777", "Getulina", "F", "Comitê", "", "09:00", "Operadora de Produção", "2000,00", "Natália"],
     ];
     const candidatosAba = XLSX.utils.aoa_to_sheet([MODELO_COLUNAS, ...exemplos]);
-    candidatosAba["!cols"] = [30, 18, 26, 14, 7, 12, 12, 9, 26, 11, 14].map((wch) => ({ wch }));
+    candidatosAba["!cols"] = [30, 18, 14, 7, 12, 12, 9, 26, 11, 14].map((wch) => ({ wch }));
 
     const instrucoes = XLSX.utils.aoa_to_sheet([
       ["Coluna", "Obrigatória?", "Como preencher"],
       ["Nome", "Sim", "Nome completo. A mensagem usa só o primeiro nome; o PDF usa o nome completo."],
       ["Telefone", "Para WhatsApp", "DDD + número, com ou sem pontuação. Ex.: (14) 99999-0000"],
-      ["E-mail", "Não", "Se preenchido, aparece o botão para enviar por e-mail."],
       ["Cidade", "Recomendado", "Cidade onde mora. Define quais horários de ônibus vão no PDF."],
       ["Sexo", "Não", "M ou F. Ajusta \"convidá-lo/convidá-la\" e \"aprovado/aprovada\"."],
       ["Tipo", "Não", "Entrevista ou Comitê. Em branco = usa o tipo escolhido no site."],
@@ -610,7 +602,7 @@
       ["Horário", "Não", "Ex.: 06:30. Em branco = usa o horário escolhido no site."],
       ["Cargo", "Não", "Cargo da vaga."],
       ["Salário", "Comitê", "Salário da vaga (obrigatório no Comitê). Ex.: 2000,00"],
-      ["Responsável", "Não", "Quem recebe o candidato. Em branco = usa o nome escolhido no site."],
+      ["Responsável", "Não", "Priscila ou Natália. Em branco = usa a responsável escolhida no site."],
       [],
       ["Apague as linhas de exemplo antes de usar."],
     ]);
@@ -699,9 +691,6 @@
           text: "Abrir no WhatsApp",
           onclick: marcarEnviado,
         }),
-        c.email
-          ? el("a", { class: "botao secundario pequeno", href: linkEmail(conv), text: "Enviar por e-mail", onclick: marcarEnviado })
-          : null,
         el("label", { class: "check" }, [
           el("input", {
             type: "checkbox",
@@ -726,6 +715,9 @@
   }
 
   function iniciar() {
+    document.getElementById("lote-responsavel").replaceChildren(
+      ...CONFIG.responsaveis.map((nome) => el("option", { value: nome, text: nome }))
+    );
     const amanha = hoje();
     amanha.setDate(amanha.getDate() + 1);
     document.getElementById("lote-data").value = paraInputData(amanha);

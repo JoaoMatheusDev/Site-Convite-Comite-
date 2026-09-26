@@ -27,13 +27,12 @@ Baixe o modelo pelo link **Baixar modelo de planilha** no site. Colunas:
 |---|---|---|
 | Nome | Sim | Nome completo |
 | Telefone | Para WhatsApp | DDD + número |
-| E-mail | Não | Mostra o botão "Enviar por e-mail" |
 | Cidade | Recomendado | Define os horários de ônibus do PDF |
 | Sexo | Não | M ou F |
 | Tipo | Não | Entrevista ou Comitê. Em branco, usa o tipo escolhido no site |
 | Data / Horário | Não | Em branco, usa os escolhidos no site |
 | Cargo / Salário | Comitê | O salário vem da planilha (ou é digitado no cadastro individual) e vai na mensagem do Comitê |
-| Responsável | Não | Em branco, usa a escolhida no site |
+| Responsável | Não | Priscila ou Natália. Em branco, usa a escolhida no site |
 
 ## Como alterar textos, vagas, vale e horários
 
