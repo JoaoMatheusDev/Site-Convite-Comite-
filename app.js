@@ -251,10 +251,13 @@
       cidades_fretado: CONFIG.cidadesFretado,
     };
 
-    let mensagem = tipo.texto.replace(/\{\{(\w+)\}\}/g, (_, chave) => (chave in valores ? valores[chave] : `{{${chave}}}`));
+    const preencher = (texto) => texto.replace(/\{\{(\w+)\}\}/g, (_, chave) => (chave in valores ? valores[chave] : `{{${chave}}}`));
+    let mensagem = preencher(tipo.texto);
     if (l.horariosNaMensagem && horarios) mensagem += "\n\n" + horariosEmTexto(horarios);
 
-    return { c, tipoId, tipo, data, horario: valores.horario_hh, responsavel, telefone, horarios, mensagem, avisos };
+    return {
+      c, tipoId, tipo, data, horario: valores.horario_hh, responsavel, salario, telefone, horarios, mensagem, avisos, valores, preencher,
+    };
   }
 
   function nomeArquivo(conv) {
@@ -285,95 +288,213 @@
       .replace(/→/g, "->");
   }
 
+  // Marca em negrito (entre \u0001 e \u0002) os dados do candidato e os trechos do config
+  function marcarNegrito(texto, conv) {
+    const v = conv.valores;
+    const termos = [v.quando, v.quando_completo, v.horario, v.horario_hh, v.responsavel, v.salario, v.vale, ...(conv.tipo.negrito || [])]
+      .filter((t) => t && !t.startsWith("["))
+      .sort((a, b) => b.length - a.length)
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!termos.length) return texto;
+    return texto.replace(new RegExp(termos.join("|"), "g"), (m) => `\u0001${m}\u0002`);
+  }
+
+  // PDF em formato de tela de celular: letras grandes sem precisar dar zoom
   function gerarPdf(conv) {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const largura = doc.internal.pageSize.getWidth();
-    const altura = doc.internal.pageSize.getHeight();
-    const margem = 18;
-    const AZUL = [11, 58, 110];
-    const VERDE = [31, 122, 58];
+    const L = 108;
+    const A = 192;
+    const M = 8;
+    const W = L - M * 2;
+    const doc = new jsPDF({ unit: "mm", format: [L, A] });
+    const COR = {
+      azul: [11, 58, 110],
+      azulClaro: [232, 240, 250],
+      verde: [31, 122, 58],
+      verdeClaro: [230, 244, 234],
+      alerta: [154, 91, 0],
+      alertaClaro: [255, 243, 222],
+      texto: [28, 36, 48],
+      suave: [91, 102, 117],
+    };
+    const alturaLinha = (tam) => tam * 0.3528 * 1.3;
+    let y = 0;
+
+    function fonte(tam, negrito, cor) {
+      doc.setFont("helvetica", negrito ? "bold" : "normal");
+      doc.setFontSize(tam);
+      doc.setTextColor(...(cor || COR.texto));
+    }
 
     function cabecalho(titulo, subtitulo) {
-      doc.setFillColor(...AZUL);
-      doc.rect(0, 0, largura, 30, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text(titulo, margem, 15);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10.5);
-      doc.text(subtitulo, margem, 23);
-      doc.setTextColor(28, 36, 48);
+      doc.setFillColor(...COR.azul);
+      doc.rect(0, 0, L, 25, "F");
+      fonte(16, true, [255, 255, 255]);
+      doc.text(titulo, M, 12);
+      fonte(9.5, false, [255, 255, 255]);
+      doc.text(subtitulo, M, 19.5);
+      y = 33;
     }
 
-    // Página 1: convite
+    function novaPagina() {
+      doc.addPage([L, A]);
+      y = 14;
+    }
+
+    // Quadro colorido com um rótulo pequeno e linhas de texto
+    function quadro(rotulo, linhas, fundo, corRotulo) {
+      const blocos = linhas.map((l) => {
+        fonte(l.tam, l.negrito);
+        return { ...l, partes: doc.splitTextToSize(l.texto, W - 10) };
+      });
+      const altura = 13 + blocos.reduce((s, b) => s + b.partes.length * alturaLinha(b.tam), 0);
+      if (y + altura > A - 8) novaPagina();
+      doc.setFillColor(...fundo);
+      doc.roundedRect(M, y, W, altura, 3, 3, "F");
+      doc.setFillColor(...corRotulo);
+      doc.rect(M, y + 3, 1.6, altura - 6, "F");
+      fonte(8.5, true, corRotulo);
+      doc.text(rotulo.toUpperCase(), M + 5, y + 7);
+      let yy = y + 7 + 2;
+      blocos.forEach((b) => {
+        fonte(b.tam, b.negrito, b.cor);
+        b.partes.forEach((p) => {
+          yy += alturaLinha(b.tam);
+          doc.text(p, M + 5, yy - 1.2);
+        });
+      });
+      y += altura + 4;
+    }
+
+    // Texto corrido com trechos em negrito e marcadores de lista
+    function textoRico(texto, tam) {
+      const lh = alturaLinha(tam);
+      texto.split("\n").forEach((linha) => {
+        if (!linha.trim()) {
+          y += lh * 0.6;
+          return;
+        }
+        let x0 = M;
+        if (linha.startsWith("•")) {
+          linha = linha.replace(/^•\s*/, "");
+          if (y + lh > A - 8) novaPagina();
+          fonte(tam, true, COR.verde);
+          doc.text("•", M + 1, y + lh - 1.2);
+          x0 = M + 5;
+        }
+        const palavras = [];
+        let negrito = false;
+        linha.split(/([\u0001\u0002])/).forEach((pedaco) => {
+          if (pedaco === "\u0001") negrito = true;
+          else if (pedaco === "\u0002") negrito = false;
+          else pedaco.split(/(\s+)/).forEach((p) => p && palavras.push({ p, negrito }));
+        });
+        let x = x0;
+        y += lh;
+        if (y > A - 8) {
+          novaPagina();
+          y += lh;
+        }
+        palavras.forEach(({ p, negrito: n }) => {
+          fonte(tam, n, n ? COR.azul : COR.texto);
+          // Soma letra a letra: getTextWidth desconta o kerning, que o PDF não aplica
+          const largura = [...p].reduce((soma, letra) => soma + doc.getTextWidth(letra), 0);
+          if (/^\s+$/.test(p)) {
+            if (x > x0) x += largura;
+            return;
+          }
+          if (x + largura > M + W && x > x0) {
+            x = x0;
+            y += lh;
+            if (y > A - 8) {
+              novaPagina();
+              y += lh;
+            }
+          }
+          doc.text(p, x, y - 1.2);
+          x += largura;
+        });
+      });
+    }
+
+    // Página 1: resumo com os destaques
     cabecalho(conv.tipo.titulo, "JBS Friboi Lins · Recrutamento e Seleção");
+    fonte(8.5, true, COR.suave);
+    doc.text("CANDIDATO(A)", M, y);
+    fonte(14, true);
+    const nome = doc.splitTextToSize(conv.c.nome.trim(), W);
+    doc.text(nome, M, y + 6.5);
+    y += 6.5 + nome.length * alturaLinha(14);
 
-    const dados = [
-      ["Candidato(a)", conv.c.nome.trim()],
-      ["Data", conv.data ? `${dois(conv.data.getDate())}/${dois(conv.data.getMonth() + 1)}/${conv.data.getFullYear()} (${DIAS_SEMANA[conv.data.getDay()]})` : "-"],
-      ["Horário", conv.horario],
-      ["Procurar por", conv.responsavel],
-    ];
-    if (conv.c.cidade) dados.push(["Cidade", conv.c.cidade]);
-    doc.autoTable({
-      startY: 38,
-      body: dados,
-      theme: "plain",
-      margin: { left: margem, right: margem },
-      styles: { fontSize: 11, cellPadding: 1.6 },
-      columnStyles: { 0: { fontStyle: "bold", cellWidth: 36, textColor: AZUL } },
-    });
+    const destaques = conv.tipo.destaques || {};
+    const d = conv.data;
+    const dataTexto = d
+      ? `${capitalizar(DIAS_SEMANA[d.getDay()])}, ${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}`
+      : "Data a confirmar";
+    const relativo = conv.valores.quando.startsWith("amanhã") ? " (amanhã)" : conv.valores.quando.startsWith("hoje") ? " (hoje)" : "";
+    quadro("Data e horário", [
+      { texto: dataTexto + relativo, tam: 13, negrito: true, cor: COR.azul },
+      { texto: conv.horario, tam: 26, negrito: true, cor: COR.verde },
+    ], COR.azulClaro, COR.azul);
 
-    let y = doc.lastAutoTable.finalY + 6;
-    doc.setDrawColor(214, 221, 230);
-    doc.line(margem, y, largura - margem, y);
-    y += 8;
+    const local = [];
+    if (destaques.local) local.push({ texto: conv.preencher(destaques.local), tam: 12, negrito: true });
+    local.push({ texto: `Procure por: ${conv.responsavel}`, tam: 12, negrito: false });
+    quadro("Local", local, COR.azulClaro, COR.azul);
 
-    doc.setFontSize(11.5);
-    const linhas = doc.splitTextToSize(textoParaPdf(conv.mensagem), largura - margem * 2);
-    linhas.forEach((linha) => {
-      if (y > altura - 20) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(linha, margem, y);
-      y += 5.6;
-    });
+    if (conv.tipo.exigeSalario) {
+      quadro("Salário e benefícios", [
+        { texto: `Salário: ${conv.valores.salario}`, tam: 14, negrito: true, cor: COR.verde },
+        { texto: `Vale-alimentação: ${conv.valores.vale}`, tam: 12, negrito: true },
+        { texto: `Transporte fretado para: ${CONFIG.cidadesFretado}`, tam: 10.5, negrito: false, cor: COR.suave },
+      ], COR.verdeClaro, COR.verde);
+    }
 
-    // Página 2: horários do ônibus da cidade do candidato
+    if (destaques.levar && destaques.levar.length) {
+      quadro("O que levar", destaques.levar.map((t) => ({ texto: `•  ${conv.preencher(t)}`, tam: 12.5, negrito: true })), COR.verdeClaro, COR.verde);
+    }
+
+    if (destaques.atencao) {
+      quadro("Atenção", [{ texto: conv.preencher(destaques.atencao), tam: 11.5, negrito: true, cor: COR.alerta }], COR.alertaClaro, COR.alerta);
+    }
+
+    // Página 2: mensagem completa
+    novaPagina();
+    fonte(8.5, true, COR.suave);
+    doc.text("MENSAGEM", M, y);
+    y += 2;
+    textoRico(marcarNegrito(textoParaPdf(conv.mensagem), conv), 12);
+
+    // Horários do ônibus da cidade do candidato
     const h = conv.horarios;
     if (h) {
-      doc.addPage();
-      cabecalho(`Horários do ônibus – ${h.cidade}`, `Plataforma ${h.plataforma} · Transporte fretado JBS`);
-      const larguraTabela = (largura - margem * 2 - 8) / 2;
-      const tabela = (titulo, itens, esquerda) => {
+      doc.addPage([L, A]);
+      cabecalho("Horários do ônibus", `${h.cidade} · Plataforma ${h.plataforma}`);
+      const tabela = (titulo, itens) => {
         doc.autoTable({
-          startY: 40,
+          startY: y,
           head: [[{ content: titulo, colSpan: 3 }], ["Horário", "Veículo", "Dias"]],
           body: itens.length ? itens.map((i) => [i.horario, i.modelo, i.dias]) : [[{ content: "Sem horários", colSpan: 3 }]],
-          margin: { left: esquerda },
-          tableWidth: larguraTabela,
-          styles: { fontSize: 10, cellPadding: 1.8, halign: "center" },
-          headStyles: { fillColor: VERDE },
+          margin: { left: M, right: M, top: 12, bottom: 10 },
+          showHead: "everyPage",
+          styles: { fontSize: 11.5, cellPadding: 1.5, halign: "center", textColor: COR.texto },
+          headStyles: { fillColor: COR.verde, textColor: [255, 255, 255], fontSize: 11.5 },
+          columnStyles: { 0: { fontStyle: "bold", fontSize: 13, textColor: COR.azul } },
           alternateRowStyles: { fillColor: [243, 246, 249] },
         });
+        y = doc.lastAutoTable.finalY + 6;
       };
-      tabela(`Ida: ${h.cidade} -> JBS`, h.ida, margem);
-      tabela(`Volta: JBS -> ${h.cidade}`, h.volta, margem + larguraTabela + 8);
+      tabela(`Ida: ${h.cidade} -> JBS`, h.ida);
+      tabela(`Volta: JBS -> ${h.cidade}`, h.volta);
     }
 
-    // Página 3: cartão de autorização para o motorista
-    doc.addPage();
-    cabecalho("Autorização de transporte", "Apresente esta página ao motorista do ônibus");
+    // Cartão de autorização para o motorista
+    doc.addPage([L, A]);
+    cabecalho("Autorização de transporte", "Mostre esta tela ao motorista do ônibus");
     const props = doc.getImageProperties(window.CARTAO_AUTORIZACAO);
-    const alturaMax = altura - 30 - 24;
-    const larguraMax = largura - margem * 2;
-    const escala = Math.min(larguraMax / props.width, alturaMax / props.height);
+    const escala = Math.min(W / props.width, (A - y - 8) / props.height);
     const w = props.width * escala;
-    const hImg = props.height * escala;
-    doc.addImage(window.CARTAO_AUTORIZACAO, "JPEG", (largura - w) / 2, 38, w, hImg);
+    doc.addImage(window.CARTAO_AUTORIZACAO, "JPEG", (L - w) / 2, y, w, props.height * escala);
 
     return doc;
   }

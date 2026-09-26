@@ -16,6 +16,14 @@ window.CONFIG = {
       nome: "Entrevista",
       titulo: "Convite para Entrevista",
       responsavelPadrao: "Priscila",
+      // Quadros de destaque do PDF (aceitam os mesmos marcadores do texto)
+      destaques: {
+        local: "JBS Friboi Lins (ao lado do Recinto de Exposições)",
+        levar: ["Currículo impresso"],
+        atencao: "Venha sem brincos, piercings, cílios, maquiagem, barba ou bigode, pois, se {{aprovado}}, poderá realizar o teste no mesmo dia.",
+      },
+      // Trechos que ficam em negrito na mensagem do PDF
+      negrito: ["Vagas disponíveis:", "Masculina:", "Feminina:", "Favor trazer currículo impresso", "confirme sua presença"],
       // Marcadores disponíveis:
       // {{nome}} primeiro nome · {{nome_completo}} · {{saudacao}} Bom dia/Boa tarde/Boa noite
       // {{convida_lo}} convidá-lo / convidá-la · {{aprovado}} aprovado / aprovada
@@ -51,6 +59,11 @@ Se tiver interesse, confirme sua presença! 😊`,
       nome: "Comitê",
       titulo: "Convite para o Comitê",
       responsavelPadrao: "Natália",
+      destaques: {
+        local: "JBS Friboi Lins (ao lado do Recinto de Exposições)",
+        levar: ["RG/CPF ou CNH"],
+      },
+      negrito: ["última fase do processo seletivo", "Trazer RG/CPF ou CNH", "Caso não seja possível, favor avisar"],
       exigeSalario: true,
       texto: `{{saudacao}}, {{nome}}
 
