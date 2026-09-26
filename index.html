@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Convites</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-conteudo">
+      <h1>Gerador de Convites</h1>
+      <p>Suba a planilha ou preencha um candidato, confira a mensagem e envie pelo WhatsApp com o PDF.</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. Dados do lote -->
+    <section class="cartao">
+      <h2><span class="passo">1</span> Tipo de convite e dados padrão</h2>
+      <p class="ajuda">Valem para todos os candidatos que não tiverem esses dados preenchidos na planilha.</p>
+      <div class="grade">
+        <label>Tipo de convite
+          <select id="lote-tipo">
+            <option value="entrevista">Script 01 · Entrevista</option>
+            <option value="comite">Script 02 · Comitê</option>
+          </select>
+        </label>
+        <label>Data
+          <input type="date" id="lote-data">
+        </label>
+        <label>Horário
+          <input type="time" id="lote-horario">
+        </label>
+        <label>Responsável
+          <input type="text" id="lote-responsavel">
+        </label>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="lote-horarios-na-mensagem">
+        Incluir os horários do ônibus no texto da mensagem do WhatsApp (além do PDF)
+      </label>
+    </section>
+
+    <!-- 2. Candidatos -->
+    <section class="cartao">
+      <h2><span class="passo">2</span> Candidatos</h2>
+      <div class="abas" role="tablist">
+        <button class="aba ativa" data-aba="planilha" role="tab">Planilha (vários)</button>
+        <button class="aba" data-aba="individual" role="tab">Individual</button>
+      </div>
+
+      <div class="painel" id="painel-planilha">
+        <label class="soltar" id="area-soltar">
+          <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+          <strong>Clique para escolher a planilha</strong>
+          <span>ou arraste o arquivo aqui (.xlsx, .xls ou .csv)</span>
+        </label>
+        <p class="ajuda">
+          Não tem a planilha no formato certo?
+          <button class="link" id="baixar-modelo" type="button">Baixar modelo de planilha</button>
+        </p>
+      </div>
+
+      <form class="painel oculto" id="painel-individual">
+        <div class="grade">
+          <label>Nome completo *
+            <input type="text" name="nome" required>
+          </label>
+          <label>Telefone (WhatsApp)
+            <input type="tel" name="telefone" placeholder="(14) 99999-0000">
+          </label>
+          <label>E-mail
+            <input type="email" name="email">
+          </label>
+          <label>Cidade
+            <input type="text" name="cidade" list="lista-cidades">
+          </label>
+          <label>Sexo
+            <select name="sexo">
+              <option value="">Não informar</option>
+              <option value="M">Masculino</option>
+              <option value="F">Feminino</option>
+            </select>
+          </label>
+          <label>Cargo
+            <input type="text" name="cargo">
+          </label>
+          <label>Salário (Comitê)
+            <input type="text" name="salario" placeholder="2000,00">
+          </label>
+        </div>
+        <datalist id="lista-cidades"></datalist>
+        <button type="submit" class="botao">Adicionar à lista</button>
+      </form>
+    </section>
+
+    <!-- 3. Convites gerados -->
+    <section class="cartao" id="secao-lista">
+      <div class="lista-cabecalho">
+        <h2><span class="passo">3</span> Convites <small id="contagem"></small></h2>
+        <div class="acoes">
+          <button class="botao" id="baixar-zip" disabled>Baixar todos os PDFs (.zip)</button>
+          <button class="botao secundario" id="limpar" disabled>Limpar lista</button>
+        </div>
+      </div>
+      <p class="vazio" id="vazio">Nenhum candidato ainda. Suba uma planilha ou adicione um candidato individual.</p>
+      <ul class="lista" id="lista"></ul>
+    </section>
+
+    <p class="privacidade">
+      Os dados dos candidatos são processados somente neste navegador e não são enviados nem salvos em nenhum servidor.
+    </p>
+  </main>
+
+  <div class="aviso-flutuante oculto" id="aviso"></div>
+
+  <script src="lib/xlsx.full.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script src="lib/jspdf.plugin.autotable.min.js"></script>
+  <script src="lib/jszip.min.js"></script>
+  <script src="img/cartao-autorizacao.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
