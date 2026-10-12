@@ -50,3 +50,15 @@ No repositório: **Settings → Pages → Branch: `main` / pasta `/ (root)` → 
 O site fica em `https://joaomatheusdev.github.io/Site-Convite-Comite-/`.
 
 Também dá para abrir o `index.html` direto do computador, sem internet.
+
+## Versão offline (computadores sem acesso à internet)
+
+O arquivo [`versao-offline/Gerador-de-Convites.html`](versao-offline/Gerador-de-Convites.html) tem o site inteiro dentro dele: bibliotecas, logo e cartão de autorização. Ele não acessa nada da internet.
+
+1. Baixe o arquivo (no GitHub: abra o arquivo e clique em **Download raw file**).
+2. Copie para o computador: na Área de Trabalho, numa pasta da rede ou num pen drive.
+3. Dê dois cliques. Ele abre no navegador (Edge ou Chrome) e funciona igual ao site.
+
+**Alterar textos, vagas, vale ou horários na versão offline:** abra o arquivo no Bloco de Notas, procure por `CONFIGURAÇÃO`, edite e salve. Ou altere o `config.js` e gere o arquivo de novo com `python3 ferramentas/gerar-versao-offline.py`.
+
+Observação: o botão **Abrir no WhatsApp** precisa que o computador consiga abrir o WhatsApp (WhatsApp Web ou o aplicativo instalado). Todo o resto funciona sem internet.
