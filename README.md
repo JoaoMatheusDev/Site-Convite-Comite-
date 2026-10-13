@@ -6,7 +6,7 @@ Ele funciona a partir de uma planilha ou de um cadastro individual.
 Para cada candidato, o site gera:
 
 - a **mensagem pronta** para o WhatsApp, com primeiro nome, data ("amanhã, 24/9"), horário, gênero (convidá-lo/convidá-la) e salário;
-- o botão **Abrir no WhatsApp**, que abre a conversa com o número do candidato e a mensagem já escrita;
+- no tablet, o botão **Enviar PDF**, que manda o PDF e a mensagem pelo WhatsApp; no computador, **Baixar PDF**;
 - um **PDF com o nome do candidato**, em formato de tela de celular e com letras grandes: resumo com os destaques (data e horário, local, com quem falar, salário, o que levar, atenção), mensagem completa com os pontos importantes em negrito, horários do ônibus **só da cidade dele** e cartão de autorização para o motorista;
 - **Baixar todos os PDFs (.zip)** para o lote inteiro.
 
@@ -17,7 +17,7 @@ Os dados dos candidatos ficam só no navegador: nada é enviado ou salvo em serv
 1. Escolha o tipo de convite, a data, o horário e a responsável.
 2. Suba a planilha (aba **Planilha**) ou cadastre uma pessoa (aba **Individual**).
 3. Resolva os avisos em vermelho ou amarelo, se houver: telefone inválido, cidade sem ônibus, salário faltando etc.
-4. Em cada candidato: **Abrir no WhatsApp**, envie a mensagem e arraste o PDF para a conversa. Depois marque **Enviado**.
+4. Em cada candidato: no tablet, **Enviar PDF** (veja abaixo); no computador, **Copiar mensagem** e **Baixar PDF**. Depois confira o **Enviado**.
 
 ## Usar no tablet (Android)
 
@@ -75,5 +75,3 @@ O arquivo [`versao-offline/Gerador-de-Convites.html`](versao-offline/Gerador-de-
 3. Dê dois cliques. Ele abre no navegador (Edge ou Chrome) e funciona igual ao site.
 
 **Alterar textos, vagas, vale ou horários na versão offline:** abra o arquivo no Bloco de Notas, procure por `CONFIGURAÇÃO`, edite e salve. Ou altere o `config.js` e gere o arquivo de novo com `python3 ferramentas/gerar-versao-offline.py`.
-
-Observação: o botão **Abrir no WhatsApp** precisa que o computador consiga abrir o WhatsApp (WhatsApp Web ou o aplicativo instalado). Todo o resto funciona sem internet.
