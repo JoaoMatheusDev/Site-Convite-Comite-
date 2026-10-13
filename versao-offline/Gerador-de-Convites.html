@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gerador de Convites</title>
+  <meta name="theme-color" content="#0b3a6e">
   <style>
 :root {
   --azul: #0b3a6e;
@@ -181,6 +182,14 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: n
   margin-left: 6px;
   vertical-align: middle;
 }
+.botao.feito { opacity: .7; }
+.dica {
+  background: var(--azul-claro);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 12px 0 0;
+  font-size: .95rem;
+}
 .item-avisos { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .item-avisos li {
   font-size: .85rem;
@@ -269,8 +278,8 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: n
 
       <div class="painel" id="painel-planilha">
         <label class="soltar" id="area-soltar">
-          <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
-          <strong>Clique para escolher a planilha</strong>
+          <input type="file" id="arquivo" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
+          <strong>Toque ou clique para escolher a planilha</strong>
           <span>ou arraste o arquivo aqui (.xlsx, .xls ou .csv)</span>
         </label>
         <p class="ajuda">
@@ -319,6 +328,10 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: n
         </div>
       </div>
       <p class="vazio" id="vazio">Nenhum candidato ainda. Suba uma planilha ou adicione um candidato individual.</p>
+      <p class="dica oculto" id="dica-tablet">
+        Em cada candidato: toque em <strong>1</strong> e envie a mensagem no WhatsApp. Volte para cá, toque em
+        <strong>2</strong>, escolha <strong>WhatsApp</strong> e a conversa do candidato (ela aparece no topo da lista).
+      </p>
       <ul class="lista" id="lista"></ul>
     </section>
 
@@ -598,8 +611,20 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
 
   const MODELO_COLUNAS = ["Nome", "Telefone", "Cidade", "Sexo", "Tipo", "Data", "Horário", "Cargo", "Salário", "Responsável"];
 
+  const CHAVE_SALVA = "gerador-convites:v1";
+
   let candidatos = [];
   let proximoId = 1;
+
+  // No tablet/celular o PDF vai pela tela de compartilhar do Android (direto para o WhatsApp)
+  const podeCompartilhar = (function () {
+    try {
+      const teste = new File(["x"], "teste.pdf", { type: "application/pdf" });
+      return !!(navigator.canShare && navigator.canShare({ files: [teste] }) && matchMedia("(pointer: coarse)").matches);
+    } catch (e) {
+      return false;
+    }
+  })();
 
   // ---------------------------------------------------------------------------
   // Utilidades
@@ -1072,6 +1097,22 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
     baixarArquivo(gerarPdf(conv).output("blob"), nomeArquivo(conv));
   }
 
+  // Abre a tela de compartilhar com o PDF; devolve false se a pessoa cancelar
+  async function compartilharPdf(conv) {
+    const blob = gerarPdf(conv).output("blob");
+    const arquivo = new File([blob], nomeArquivo(conv), { type: "application/pdf" });
+    try {
+      await navigator.share({ files: [arquivo] });
+      return true;
+    } catch (erro) {
+      if (erro.name === "AbortError") return false;
+      console.error(erro);
+      baixarArquivo(blob, nomeArquivo(conv));
+      avisar("Não foi possível compartilhar. O PDF foi baixado: anexe pelo WhatsApp.");
+      return true;
+    }
+  }
+
   async function baixarZip() {
     const botao = document.getElementById("baixar-zip");
     botao.disabled = true;
@@ -1146,6 +1187,8 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
       cargo: String(c.cargo ?? "").trim(),
       salario: lerValor(c.salario),
       responsavel: String(c.responsavel ?? "").trim(),
+      mensagemEnviada: false,
+      pdfEnviado: false,
       enviado: false,
     };
   }
@@ -1182,6 +1225,38 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
   }
 
   // ---------------------------------------------------------------------------
+  // Lista salva no aparelho (sobrevive ao trocar para o WhatsApp e voltar)
+  // ---------------------------------------------------------------------------
+
+  function salvar() {
+    try {
+      localStorage.setItem(CHAVE_SALVA, JSON.stringify({
+        proximoId,
+        candidatos: candidatos.map((c) => ({ ...c, data: c.data ? paraInputData(c.data) : null })),
+        lote: {
+          tipo: document.getElementById("lote-tipo").value,
+          data: document.getElementById("lote-data").value,
+          horario: document.getElementById("lote-horario").value,
+          responsavel: document.getElementById("lote-responsavel").value,
+        },
+      }));
+    } catch (e) {
+      // Sem armazenamento (navegação anônima etc.): o site funciona, só não guarda a lista
+    }
+  }
+
+  function lerSalvo() {
+    try {
+      const salvo = JSON.parse(localStorage.getItem(CHAVE_SALVA));
+      if (!salvo || !Array.isArray(salvo.candidatos)) return null;
+      salvo.candidatos.forEach((c) => (c.data = lerData(c.data)));
+      return salvo;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Tela
   // ---------------------------------------------------------------------------
 
@@ -1194,6 +1269,8 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
     document.getElementById("vazio").classList.toggle("oculto", total > 0);
     document.getElementById("baixar-zip").disabled = total === 0;
     document.getElementById("limpar").disabled = total === 0;
+    document.getElementById("dica-tablet").classList.toggle("oculto", !podeCompartilhar || total === 0);
+    salvar();
   }
 
   function itemDaLista(conv) {
@@ -1213,12 +1290,12 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
       },
     });
 
-    const marcarEnviado = () => {
-      if (!c.enviado) {
-        c.enviado = true;
-        setTimeout(renderizar, 0);
-      }
+    const concluirPasso = (passo) => {
+      c[passo] = true;
+      if (c.mensagemEnviada && c.pdfEnviado) c.enviado = true;
+      setTimeout(renderizar, 0);
     };
+    const feito = (ok, texto) => (ok ? `✓ ${texto}` : texto);
 
     return el("li", { class: "item" + (c.enviado ? " enviado" : "") }, [
       el("div", { class: "item-topo" }, [
@@ -1248,16 +1325,33 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
           text: "Copiar mensagem",
           onclick: () => navigator.clipboard.writeText(conv.mensagem).then(() => avisar("Mensagem copiada.")),
         }),
-        el("button", { class: "botao pequeno", type: "button", text: "Baixar PDF", onclick: () => baixarPdf(conv) }),
         el("a", {
-          class: "botao whatsapp pequeno",
+          class: "botao whatsapp pequeno" + (c.mensagemEnviada ? " feito" : ""),
           href: conv.telefone ? linkWhatsApp(conv) : "#",
           target: "_blank",
           rel: "noopener",
           "aria-disabled": conv.telefone ? null : "true",
-          text: "Abrir no WhatsApp",
-          onclick: marcarEnviado,
+          text: feito(c.mensagemEnviada, "1 · Mensagem no WhatsApp"),
+          onclick: () => concluirPasso("mensagemEnviada"),
         }),
+        podeCompartilhar
+          ? el("button", {
+              class: "botao whatsapp pequeno" + (c.pdfEnviado ? " feito" : ""),
+              type: "button",
+              text: feito(c.pdfEnviado, "2 · Enviar PDF"),
+              onclick: async () => {
+                if (await compartilharPdf(conv)) concluirPasso("pdfEnviado");
+              },
+            })
+          : el("button", {
+              class: "botao pequeno" + (c.pdfEnviado ? " feito" : ""),
+              type: "button",
+              text: feito(c.pdfEnviado, "2 · Baixar PDF"),
+              onclick: () => {
+                baixarPdf(conv);
+                concluirPasso("pdfEnviado");
+              },
+            }),
         el("label", { class: "check" }, [
           el("input", {
             type: "checkbox",
@@ -1285,10 +1379,22 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
     document.getElementById("lote-responsavel").replaceChildren(
       ...CONFIG.responsaveis.map((nome) => el("option", { value: nome, text: nome }))
     );
-    const amanha = hoje();
-    amanha.setDate(amanha.getDate() + 1);
-    document.getElementById("lote-data").value = paraInputData(amanha);
-    aoTrocarTipo();
+    const salvo = lerSalvo();
+    if (salvo) {
+      candidatos = salvo.candidatos;
+      proximoId = salvo.proximoId || candidatos.reduce((m, c) => Math.max(m, c.id + 1), 1);
+    }
+    if (salvo && salvo.lote && CONFIG.tipos[salvo.lote.tipo]) {
+      document.getElementById("lote-tipo").value = salvo.lote.tipo;
+      document.getElementById("lote-data").value = salvo.lote.data;
+      document.getElementById("lote-horario").value = salvo.lote.horario;
+      document.getElementById("lote-responsavel").value = salvo.lote.responsavel;
+    } else {
+      const amanha = hoje();
+      amanha.setDate(amanha.getDate() + 1);
+      document.getElementById("lote-data").value = paraInputData(amanha);
+      aoTrocarTipo();
+    }
 
     ["lote-data", "lote-horario", "lote-responsavel"].forEach((id) =>
       document.getElementById(id).addEventListener("input", renderizar)
@@ -1352,6 +1458,11 @@ Guarantã	8	Plena Van	Seg a Sex	16:40	FRIG	Guaranta
     });
 
     renderizar();
+
+    // Permite abrir o site sem internet depois da primeira visita (só no site publicado)
+    if ("serviceWorker" in navigator && location.protocol === "https:") {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
   }
 
   iniciar();

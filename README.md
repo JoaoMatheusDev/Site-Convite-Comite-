@@ -19,6 +19,21 @@ Os dados dos candidatos ficam só no navegador: nada é enviado ou salvo em serv
 3. Resolva os avisos em vermelho ou amarelo, se houver: telefone inválido, cidade sem ônibus, salário faltando etc.
 4. Em cada candidato: **Abrir no WhatsApp**, envie a mensagem e arraste o PDF para a conversa. Depois marque **Enviado**.
 
+## Usar no tablet (Android)
+
+O tablet usa o **site publicado**: https://joaomatheusdev.github.io/Site-Convite-Comite-/
+
+**Primeira vez:** abra o endereço no Chrome do tablet, toque no menu ⋮ e em **Adicionar à tela inicial** (ou **Instalar app**). Aparece um ícone **Convites** com a logo da JBS.
+
+**Levar a planilha para o tablet:** salve a planilha (.xlsx) no Google Drive ou mande por e-mail para você mesma. No tablet, toque em **Toque ou clique para escolher a planilha** e escolha o arquivo no Drive ou em Downloads (anexos de e-mail ficam lá depois de baixados). Se a planilha for do Google Planilhas, salve como .xlsx antes (Arquivo → Fazer download → Microsoft Excel).
+
+**Para cada candidato:**
+1. Toque em **1 · Mensagem no WhatsApp**: abre a conversa com o número do candidato e a mensagem pronta. Toque em enviar.
+2. Volte para o site e toque em **2 · Enviar PDF**: abre a tela de compartilhar. Escolha **WhatsApp** e a conversa do candidato, que aparece no topo porque acabou de receber a mensagem.
+3. Quando os dois passos têm ✓, o candidato fica marcado como **Enviado**.
+
+A lista e as marcações ficam salvas no tablet, mesmo se o navegador recarregar ao voltar do WhatsApp. Ao terminar o lote, toque em **Limpar lista**.
+
 ## Planilha
 
 Baixe o modelo pelo link **Baixar modelo de planilha** no site. Colunas:

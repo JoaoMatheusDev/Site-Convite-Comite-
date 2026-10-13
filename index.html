@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gerador de Convites</title>
+  <meta name="theme-color" content="#0b3a6e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="img/icone-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -48,8 +51,8 @@
 
       <div class="painel" id="painel-planilha">
         <label class="soltar" id="area-soltar">
-          <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
-          <strong>Clique para escolher a planilha</strong>
+          <input type="file" id="arquivo" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
+          <strong>Toque ou clique para escolher a planilha</strong>
           <span>ou arraste o arquivo aqui (.xlsx, .xls ou .csv)</span>
         </label>
         <p class="ajuda">
@@ -98,6 +101,10 @@
         </div>
       </div>
       <p class="vazio" id="vazio">Nenhum candidato ainda. Suba uma planilha ou adicione um candidato individual.</p>
+      <p class="dica oculto" id="dica-tablet">
+        Em cada candidato: toque em <strong>1</strong> e envie a mensagem no WhatsApp. Volte para cá, toque em
+        <strong>2</strong>, escolha <strong>WhatsApp</strong> e a conversa do candidato (ela aparece no topo da lista).
+      </p>
       <ul class="lista" id="lista"></ul>
     </section>
 

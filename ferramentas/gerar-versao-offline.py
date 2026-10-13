@@ -38,6 +38,9 @@ def trocar_script(html, src, novo):
 
 
 html = ler("index.html")
+# Manifesto e ícone só servem no site publicado
+html = html.replace('  <link rel="manifest" href="manifest.webmanifest">\n', "")
+html = html.replace('  <link rel="icon" href="img/icone-192.png">\n', "")
 html = html.replace('<link rel="stylesheet" href="style.css">', f"<style>\n{ler('style.css')}\n</style>")
 html = html.replace('src="img/logo-jbs.png"', f'src="{data_uri("img/logo-jbs.png", "image/png")}"')
 
