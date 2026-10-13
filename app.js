@@ -148,13 +148,6 @@
     return "";
   }
 
-  // Devolve o número no formato internacional (5514999990000) ou null
-  function telefoneWhatsApp(telefone) {
-    let n = String(telefone || "").replace(/\D/g, "").replace(/^0+/, "");
-    if (n.length === 10 || n.length === 11) n = "55" + n;
-    return n.length === 12 || n.length === 13 ? n : null;
-  }
-
   // ---------------------------------------------------------------------------
   // Horários de ônibus
   // ---------------------------------------------------------------------------
@@ -223,9 +216,6 @@
     const nomes = c.nome.trim().split(/\s+/);
     const avisos = [];
 
-    const telefone = telefoneWhatsApp(c.telefone);
-    if (!c.telefone) avisos.push({ texto: "Sem telefone: não dá para abrir no WhatsApp." });
-    else if (!telefone) avisos.push({ texto: `Telefone inválido: "${c.telefone}". Use DDD + número.`, erro: true });
     if (!c.cidade) avisos.push({ texto: "Cidade não informada: o PDF vai sem horários de ônibus." });
     else if (!horarios) avisos.push({ texto: `Sem horários de ônibus cadastrados para "${c.cidade}".` });
     if (!data) avisos.push({ texto: "Data não informada.", erro: true });
@@ -257,17 +247,13 @@
     const mensagem = preencher(tipo.texto);
 
     return {
-      c, tipoId, tipo, data, horario: valores.horario_hh, responsavel, salario, telefone, horarios, mensagem, avisos, valores, preencher,
+      c, tipoId, tipo, data, horario: valores.horario_hh, responsavel, salario, horarios, mensagem, avisos, valores, preencher,
     };
   }
 
   function nomeArquivo(conv) {
     const base = `${conv.c.nome.trim()} - ${conv.tipo.nome}`.replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, " ");
     return `${base}.pdf`;
-  }
-
-  function linkWhatsApp(conv) {
-    return `https://wa.me/${conv.telefone}?text=${encodeURIComponent(conv.mensagem)}`;
   }
 
   // ---------------------------------------------------------------------------
@@ -507,12 +493,12 @@
     baixarArquivo(gerarPdf(conv).output("blob"), nomeArquivo(conv));
   }
 
-  // Abre a tela de compartilhar com o PDF; devolve false se a pessoa cancelar
+  // Abre a tela de compartilhar com o PDF e a mensagem; devolve false se a pessoa cancelar
   async function compartilharPdf(conv) {
     const blob = gerarPdf(conv).output("blob");
     const arquivo = new File([blob], nomeArquivo(conv), { type: "application/pdf" });
     try {
-      await navigator.share({ files: [arquivo] });
+      await navigator.share({ files: [arquivo], text: conv.mensagem });
       return true;
     } catch (erro) {
       if (erro.name === "AbortError") return false;
@@ -597,8 +583,6 @@
       cargo: String(c.cargo ?? "").trim(),
       salario: lerValor(c.salario),
       responsavel: String(c.responsavel ?? "").trim(),
-      mensagemEnviada: false,
-      pdfEnviado: false,
       enviado: false,
     };
   }
@@ -700,12 +684,11 @@
       },
     });
 
-    const concluirPasso = (passo) => {
-      c[passo] = true;
-      if (c.mensagemEnviada && c.pdfEnviado) c.enviado = true;
+    const marcarEnviado = () => {
+      c.enviado = true;
       setTimeout(renderizar, 0);
     };
-    const feito = (ok, texto) => (ok ? `✓ ${texto}` : texto);
+    const texto = (rotulo) => (c.enviado ? `✓ ${rotulo}` : rotulo);
 
     return el("li", { class: "item" + (c.enviado ? " enviado" : "") }, [
       el("div", { class: "item-topo" }, [
@@ -735,31 +718,22 @@
           text: "Copiar mensagem",
           onclick: () => navigator.clipboard.writeText(conv.mensagem).then(() => avisar("Mensagem copiada.")),
         }),
-        el("a", {
-          class: "botao whatsapp pequeno" + (c.mensagemEnviada ? " feito" : ""),
-          href: conv.telefone ? linkWhatsApp(conv) : "#",
-          target: "_blank",
-          rel: "noopener",
-          "aria-disabled": conv.telefone ? null : "true",
-          text: feito(c.mensagemEnviada, "1 · Mensagem no WhatsApp"),
-          onclick: () => concluirPasso("mensagemEnviada"),
-        }),
         podeCompartilhar
           ? el("button", {
-              class: "botao whatsapp pequeno" + (c.pdfEnviado ? " feito" : ""),
+              class: "botao whatsapp pequeno" + (c.enviado ? " feito" : ""),
               type: "button",
-              text: feito(c.pdfEnviado, "2 · Enviar PDF"),
+              text: texto("Enviar PDF"),
               onclick: async () => {
-                if (await compartilharPdf(conv)) concluirPasso("pdfEnviado");
+                if (await compartilharPdf(conv)) marcarEnviado();
               },
             })
           : el("button", {
-              class: "botao pequeno" + (c.pdfEnviado ? " feito" : ""),
+              class: "botao pequeno" + (c.enviado ? " feito" : ""),
               type: "button",
-              text: feito(c.pdfEnviado, "2 · Baixar PDF"),
+              text: texto("Baixar PDF"),
               onclick: () => {
                 baixarPdf(conv);
-                concluirPasso("pdfEnviado");
+                marcarEnviado();
               },
             }),
         el("label", { class: "check" }, [

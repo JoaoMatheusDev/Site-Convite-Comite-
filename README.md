@@ -28,9 +28,9 @@ O tablet usa o **site publicado**: https://joaomatheusdev.github.io/Site-Convite
 **Levar a planilha para o tablet:** salve a planilha (.xlsx) no Google Drive ou mande por e-mail para você mesma. No tablet, toque em **Toque ou clique para escolher a planilha** e escolha o arquivo no Drive ou em Downloads (anexos de e-mail ficam lá depois de baixados). Se a planilha for do Google Planilhas, salve como .xlsx antes (Arquivo → Fazer download → Microsoft Excel).
 
 **Para cada candidato:**
-1. Toque em **1 · Mensagem no WhatsApp**: abre a conversa com o número do candidato e a mensagem pronta. Toque em enviar.
-2. Volte para o site e toque em **2 · Enviar PDF**: abre a tela de compartilhar. Escolha **WhatsApp** e a conversa do candidato, que aparece no topo porque acabou de receber a mensagem.
-3. Quando os dois passos têm ✓, o candidato fica marcado como **Enviado**.
+1. Toque em **Enviar PDF**: abre a tela de compartilhar com o PDF e a mensagem.
+2. Escolha **WhatsApp** e a conversa do candidato. O candidato precisa estar nos contatos do tablet ou já ter conversa no WhatsApp.
+3. Envie. O candidato fica marcado como **Enviado** (✓).
 
 A lista e as marcações ficam salvas no tablet, mesmo se o navegador recarregar ao voltar do WhatsApp. Ao terminar o lote, toque em **Limpar lista**.
 
